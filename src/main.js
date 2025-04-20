@@ -3,45 +3,26 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { createHDRSelector, hdrOptions } from './components/HDRSelector.js';
+import { createHeader, createDescription } from './components/UI.js';
+import { createLoadingBar } from './components/LoadingBar.js';
+import { createControlsGuide } from './components/ControlsGuide.js';
 
-// "Spectar"
-const header = document.createElement('div');
-header.textContent = 'Spectar';
-header.style.position = 'absolute';
-header.style.top = '30px';
-header.style.left = '30px';
-header.style.letterSpacing = '-2px';
-header.style.fontFamily = "'Albert Sans', sans-serif";
-header.style.fontSize = '52px';
-header.style.fontWeight = '600';
-header.style.color = '#000000';
-header.style.zIndex = '1000'; // Ensure it appears above the Three.js canvas
-document.body.appendChild(header);
-
-// Description in bottom right
-const description = document.createElement('div');
-description.textContent = 'Utilizing RayBans newest Meta AI glasses to reinvent accessibility standards for our seniors.';
-description.style.position = 'absolute';
-description.style.bottom = '20px';
-description.style.right = '20px';
-description.style.fontFamily = "'Albert Sans', sans-serif";
-description.style.fontSize = '16px';
-description.style.fontWeight = '400';
-description.style.color = '#000000';
-description.style.maxWidth = '400px';
-description.style.textAlign = 'right';
-description.style.lineHeight = '1.5';
-description.style.zIndex = '1000'; // Ensure it appears above the Three.js canvas
-document.body.appendChild(description);
+// Create and add loading bar
+const loadingBar = createLoadingBar();
+document.body.appendChild(loadingBar.element);
 
 // Create scene, camera, and renderer
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ 
+    antialias: true,
+    powerPreference: 'high-performance' // Optimize for performance
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0xf5f5f5); // Light gray background
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
+renderer.shadowMap.softness = 1.0; // Added for softer shadows
 
 // Enable physically correct lighting
 renderer.physicallyCorrectLights = true;
@@ -51,6 +32,9 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1;
 renderer.outputEncoding = THREE.sRGBEncoding;
 
+// Optimize renderer
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for better performance
+
 document.body.appendChild(renderer.domElement);
 
 // Add lighting
@@ -58,18 +42,19 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambientLight);
 
 // Add directional light
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0); // Increased intensity from 1.0 to 2.0
 directionalLight.position.set(5, 5, 5);
 directionalLight.castShadow = true;
 // Configure shadow properties
-directionalLight.shadow.mapSize.width = 2048;
-directionalLight.shadow.mapSize.height = 2048;
-directionalLight.shadow.camera.near = 0.5;
+directionalLight.shadow.mapSize.width = 4096; // Increased from 2048 for higher quality shadows
+directionalLight.shadow.mapSize.height = 4096; // Increased from 2048 for higher quality shadows
+directionalLight.shadow.camera.near = 0.1; // Reduced from 0.5 for closer shadows
 directionalLight.shadow.camera.far = 50;
 directionalLight.shadow.camera.left = -10;
 directionalLight.shadow.camera.right = 10;
 directionalLight.shadow.camera.top = 10;
 directionalLight.shadow.camera.bottom = -10;
+directionalLight.shadow.bias = -0.0001; // Added shadow bias to reduce shadow acne
 scene.add(directionalLight);
 
 // Add additional fill light from the front
@@ -85,7 +70,7 @@ const cubeMaterial = new THREE.MeshStandardMaterial({
     metalness: 0.1
 });
 const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-cube.position.set(0, -2.75, -2.5); // Position the cube below the glasses
+cube.position.set(0, -2.75, -2.5);
 cube.receiveShadow = true; // Allow the cube to receive shadows
 scene.add(cube);
 
@@ -119,17 +104,77 @@ let model;
 
 let currentHdrIndex = 0;
 
+// Track loading progress
+let loadingComplete = false;
+let modelLoaded = false;
+let hdrLoaded = false;
+let modelProgress = 0;
+let hdrProgress = 0;
+
+// Function to update overall loading progress
+function updateLoadingProgress() {
+    // Calculate overall progress (model and HDR each contribute 50%)
+    const overallProgress = (modelProgress + hdrProgress) / 2;
+    loadingBar.updateProgress(overallProgress);
+}
+
+// Function to check if everything is loaded
+function checkLoadingComplete() {
+    if (modelLoaded && hdrLoaded && !loadingComplete) {
+        loadingComplete = true;
+        
+        // Hide loading bar with a slight delay
+        setTimeout(() => {
+            loadingBar.hide();
+            
+            // Add UI elements only after loading bar is hidden
+            const header = createHeader();
+            document.body.appendChild(header);
+            
+            const description = createDescription();
+            document.body.appendChild(description);
+            
+            // Add controls guide
+            const controlsGuide = createControlsGuide();
+            document.body.appendChild(controlsGuide);
+            
+            console.log("All content loaded, UI elements added");
+        }, 500);
+    }
+}
+
 // Function to load HDR environment map
 function loadHDRMap(index) {
     const hdrPath = hdrOptions[index].path;
     
     new RGBELoader()
-        .load(hdrPath, function(texture) {
-            texture.mapping = THREE.EquirectangularReflectionMapping;
-            scene.environment = texture;
-            scene.backgroundRotation = new THREE.Euler(0, Math.PI / 0.6, 0, 'YXZ'); // Rotate by 90 degrees around the Y-axis
-            scene.environmentRotation = scene.backgroundRotation; // Apply the same rotation to the environment
-        });
+        .load(hdrPath, 
+            function(texture) {
+                texture.mapping = THREE.EquirectangularReflectionMapping;
+                scene.environment = texture;
+                scene.backgroundRotation = new THREE.Euler(0, Math.PI / 0.6, 0, 'YXZ'); // Rotate by 90 degrees around the Y-axis
+                scene.environmentRotation = scene.backgroundRotation; // Apply the same rotation to the environment
+                
+                // Mark HDR as loaded
+                hdrProgress = 100;
+                updateLoadingProgress();
+                hdrLoaded = true;
+                checkLoadingComplete();
+            },
+            // Progress callback
+            function(xhr) {
+                hdrProgress = (xhr.loaded / xhr.total) * 100;
+                updateLoadingProgress();
+            },
+            // Error callback
+            function(error) {
+                console.error('An error occurred loading the HDR:', error);
+                hdrProgress = 100; // Still mark as complete to prevent UI from never appearing
+                updateLoadingProgress();
+                hdrLoaded = true;
+                checkLoadingComplete();
+            }
+        );
 }
 
 // Load initial HDR map
@@ -159,15 +204,15 @@ loader.load(
                 
                 // Keep the existing material but modify its properties
                 const material = node.material;
-                                // Keep existing material properties
-                                material.metalness = 0.9;
-                                material.roughness = 0.1;
-                                material.envMapIntensity = 2.5;
-                                material.clearcoat = 1.0;
-                                material.clearcoatRoughness = 0.1;
-                                
-                                // Reduce bump map intensity
-                                if (material.bumpMap) {
+                // Keep existing material properties
+                material.metalness = 0.9;
+                material.roughness = 0.1;
+                material.envMapIntensity = 2.5;
+                material.clearcoat = 1.0;
+                material.clearcoatRoughness = 0.1;
+                
+                // Reduce bump map intensity
+                if (material.bumpMap) {
                     // Improve bump map appearance
                     material.bumpMap.minFilter = THREE.LinearMipmapLinearFilter;
                     material.bumpMap.magFilter = THREE.LinearFilter;
@@ -175,15 +220,13 @@ loader.load(
                     material.bumpScale = 0.3; // Adjust this value if needed
                     material.bumpMap.needsUpdate = true;
                 }
-                                
-                                // If using normal map, you can also adjust its intensity
-                                if (material.normalMap) {
-                                    material.normalScale.set(0.3, 0.3); // Reduce normal map intensity
-                                }
-                                
-                                material.needsUpdate = true;
-                            
-                    
+                
+                // If using normal map, you can also adjust its intensity
+                if (material.normalMap) {
+                    material.normalScale.set(0.3, 0.3); // Reduce normal map intensity
+                }
+                
+                material.needsUpdate = true;
             }
             if (node.name === 'glasses-rim') {
                 const material_rim = node.material;
@@ -203,8 +246,7 @@ loader.load(
                 }
                 
                 material_rim.needsUpdate = true;
-
-                }
+            }
                 
             // Enable shadows for all meshes in the model
             if (node.isMesh) {
@@ -213,19 +255,31 @@ loader.load(
             }
         });
         
-        
         const scale = 0.2;
         model.scale.set(scale, scale, scale);
         //model.rotation.y = Math.PI / 2;
         model.position.y = 0.1; // Position slightly above the cube
         
         scene.add(model);
+        
+        // Mark model as loaded
+        modelProgress = 100;
+        updateLoadingProgress();
+        modelLoaded = true;
+        checkLoadingComplete();
     },
     function(xhr) {
-        console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+        // Update model loading progress
+        modelProgress = (xhr.loaded / xhr.total) * 100;
+        updateLoadingProgress();
     },
     function(error) {
         console.error('An error occurred loading the model:', error);
+        // Still mark as loaded to prevent UI from never appearing
+        modelProgress = 100;
+        updateLoadingProgress();
+        modelLoaded = true;
+        checkLoadingComplete();
     }
 );
 
@@ -235,7 +289,6 @@ function animate() {
     
     if (model) {
         //model.rotation.y += 0.005;
-        
     }
     
     renderer.render(scene, camera);
