@@ -2,7 +2,7 @@
 export const hdrOptions = [
     { name: 'Studio', path: '/brown_photostudio_01_4k.hdr' },
     { name: 'Sunset', path: '/belfast.hdr' },
-    { name: 'Night', path: '/lilienstein_4k.hdr' },
+    { name: 'Night', path: '/spectar-hdr.hdr' },
 ];
 
 // function to create and return the HDR selector element

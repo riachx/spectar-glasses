@@ -2,12 +2,13 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { createHDRSelector, hdrOptions } from './components/HDRSelector.js';
+import { hdrOptions } from './components/HDRSelector.js';
 import { createHeader, createDescription } from './components/UI.js';
 import { createLoadingBar } from './components/LoadingBar.js';
 import { createControlsGuide } from './components/ControlsGuide.js';
+import { createHamburgerMenu } from './components/HamburgerMenu.js';
 
-// Create and add loading bar
+
 const loadingBar = createLoadingBar();
 document.body.appendChild(loadingBar.element);
 
@@ -24,7 +25,6 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
 renderer.shadowMap.softness = 1.0; // Added for softer shadows
 
-// Enable physically correct lighting
 renderer.physicallyCorrectLights = true;
 
 // Important for glass material
@@ -32,8 +32,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1;
 renderer.outputEncoding = THREE.sRGBEncoding;
 
-// Optimize renderer
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for better performance
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
 
 document.body.appendChild(renderer.domElement);
 
@@ -45,10 +44,9 @@ scene.add(ambientLight);
 const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0); // Increased intensity from 1.0 to 2.0
 directionalLight.position.set(5, 5, 5);
 directionalLight.castShadow = true;
-// Configure shadow properties
-directionalLight.shadow.mapSize.width = 4096; // Increased from 2048 for higher quality shadows
-directionalLight.shadow.mapSize.height = 4096; // Increased from 2048 for higher quality shadows
-directionalLight.shadow.camera.near = 0.1; // Reduced from 0.5 for closer shadows
+directionalLight.shadow.mapSize.width = 2048;
+directionalLight.shadow.mapSize.height =2048; 
+directionalLight.shadow.camera.near = 0.1;
 directionalLight.shadow.camera.far = 50;
 directionalLight.shadow.camera.left = -10;
 directionalLight.shadow.camera.right = 10;
@@ -110,11 +108,15 @@ let modelLoaded = false;
 let hdrLoaded = false;
 let modelProgress = 0;
 let hdrProgress = 0;
+let backgroundEnabled = false; // Track if background is enabled, disabled by default
 
 // Function to update overall loading progress
 function updateLoadingProgress() {
     // Calculate overall progress (model and HDR each contribute 50%)
-    const overallProgress = (modelProgress + hdrProgress) / 2;
+    // Ensure we don't divide by zero or get NaN/Infinity values
+    const modelProgressSafe = isNaN(modelProgress) || !isFinite(modelProgress) ? 0 : modelProgress;
+    const hdrProgressSafe = isNaN(hdrProgress) || !isFinite(hdrProgress) ? 0 : hdrProgress;
+    const overallProgress = (modelProgressSafe + hdrProgressSafe) / 2;
     loadingBar.updateProgress(overallProgress);
 }
 
@@ -138,6 +140,30 @@ function checkLoadingComplete() {
             const controlsGuide = createControlsGuide();
             document.body.appendChild(controlsGuide);
             
+            // Create and add the hamburger menu
+            const hamburgerMenu = createHamburgerMenu(
+                // Background toggle callback
+                (isEnabled) => {
+                    backgroundEnabled = isEnabled;
+                    if (isEnabled) {
+                        if(currentHdrIndex === 2) { scene.background = null; } else{scene.background = scene.environment;}
+                    } else {
+                        scene.background = null;
+                    }
+                },
+                // HDR selector callback
+                (index) => {
+                    currentHdrIndex = index;
+                    loadHDRMap(currentHdrIndex);
+                }
+            );
+            
+            // Set the HDR options
+            hamburgerMenu.setHdrOptions(hdrOptions);
+             
+            // Add the hamburger menu to the page
+            document.body.appendChild(hamburgerMenu.element);
+            
             console.log("All content loaded, UI elements added");
         }, 500);
     }
@@ -155,15 +181,23 @@ function loadHDRMap(index) {
                 scene.backgroundRotation = new THREE.Euler(0, Math.PI / 0.6, 0, 'YXZ'); // Rotate by 90 degrees around the Y-axis
                 scene.environmentRotation = scene.backgroundRotation; // Apply the same rotation to the environment
                 
-                // Mark HDR as loaded
+                // Set background based on toggle state
+                if (backgroundEnabled) {
+                    scene.background = texture;
+                } else {
+                    scene.background = null;
+                }
+                
+                
                 hdrProgress = 100;
                 updateLoadingProgress();
                 hdrLoaded = true;
                 checkLoadingComplete();
             },
-            // Progress callback
+            
             function(xhr) {
-                hdrProgress = (xhr.loaded / xhr.total) * 100;
+                // Prevent division by zero
+                hdrProgress = xhr.total > 0 ? (xhr.loaded / xhr.total) * 100 : 0;
                 updateLoadingProgress();
             },
             // Error callback
@@ -179,13 +213,6 @@ function loadHDRMap(index) {
 
 // Load initial HDR map
 loadHDRMap(currentHdrIndex);
-
-// Create and add the HDR selector to the page
-const hdrSelector = createHDRSelector((index) => {
-    currentHdrIndex = index;
-    loadHDRMap(currentHdrIndex);
-});
-document.body.appendChild(hdrSelector);
 
 // Load the GLTF model
 loader.load(
@@ -213,17 +240,16 @@ loader.load(
                 
                 // Reduce bump map intensity
                 if (material.bumpMap) {
-                    // Improve bump map appearance
+
                     material.bumpMap.minFilter = THREE.LinearMipmapLinearFilter;
                     material.bumpMap.magFilter = THREE.LinearFilter;
                     material.bumpMap.anisotropy = renderer.capabilities.getMaxAnisotropy();
-                    material.bumpScale = 0.3; // Adjust this value if needed
+                    material.bumpScale = 0.3; 
                     material.bumpMap.needsUpdate = true;
                 }
                 
-                // If using normal map, you can also adjust its intensity
                 if (material.normalMap) {
-                    material.normalScale.set(0.3, 0.3); // Reduce normal map intensity
+                    material.normalScale.set(0.3, 0.3); 
                 }
                 
                 material.needsUpdate = true;
@@ -237,12 +263,11 @@ loader.load(
                 
                 // Reduce bump map intensity
                 if (material_rim.bumpMap) {
-                    material_rim.bumpScale = 0.5; // Reduce this value to decrease bump intensity (default is usually 1.0)
+                    material_rim.bumpScale = 0.5; 
                 }
                 
-                // If using normal map, you can also adjust its intensity
                 if (material_rim.normalMap) {
-                    material_rim.normalScale.set(0.4, 0.4); // Reduce normal map intensity
+                    material_rim.normalScale.set(0.4, 0.4); 
                 }
                 
                 material_rim.needsUpdate = true;
@@ -257,7 +282,6 @@ loader.load(
         
         const scale = 0.2;
         model.scale.set(scale, scale, scale);
-        //model.rotation.y = Math.PI / 2;
         model.position.y = 0.1; // Position slightly above the cube
         
         scene.add(model);
@@ -270,7 +294,8 @@ loader.load(
     },
     function(xhr) {
         // Update model loading progress
-        modelProgress = (xhr.loaded / xhr.total) * 100;
+        // Prevent division by zero
+        modelProgress = xhr.total > 0 ? (xhr.loaded / xhr.total) * 100 : 0;
         updateLoadingProgress();
     },
     function(error) {

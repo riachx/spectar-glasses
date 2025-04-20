@@ -41,7 +41,7 @@ export function createHeader() {
 
 export function createDescription() {
     const description = document.createElement('div');
-    description.textContent = 'Utilizing RayBans newest Meta AI glasses to reinvent accessibility standards for our seniors.';
+    description.textContent = 'Empowering seniors with Augmented Reality Glasses to detect scams and stay safe online.';
     description.style.position = 'absolute';
     description.style.bottom = '20px';
     description.style.right = '20px';
@@ -67,4 +67,61 @@ export function createDescription() {
     }, 1200); // Delay until after the header animation completes
     
     return description;
+}
+
+export function createBackgroundToggle(onToggle) {
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.bottom = '80px';
+    container.style.left = '20px';
+    container.style.zIndex = '1000';
+    container.style.fontFamily = "'Albert Sans', sans-serif";
+    
+    const label = document.createElement('label');
+    label.textContent = 'Background: ';
+    label.style.color = '#000000';
+    label.style.fontSize = '14px';
+    label.style.marginRight = '10px';
+    container.appendChild(label);
+    
+    const toggle = document.createElement('div');
+    toggle.style.display = 'inline-block';
+    toggle.style.width = '40px';
+    toggle.style.height = '20px';
+    toggle.style.backgroundColor = '#cccccc';
+    toggle.style.borderRadius = '10px';
+    toggle.style.position = 'relative';
+    toggle.style.cursor = 'pointer';
+    toggle.style.transition = 'background-color 0.3s ease';
+    
+    const slider = document.createElement('div');
+    slider.style.position = 'absolute';
+    slider.style.width = '16px';
+    slider.style.height = '16px';
+    slider.style.backgroundColor = '#ffffff';
+    slider.style.borderRadius = '50%';
+    slider.style.top = '2px';
+    slider.style.left = '2px';
+    slider.style.transition = 'transform 0.3s ease';
+    toggle.appendChild(slider);
+    
+    container.appendChild(toggle);
+    
+    let isOn = true;
+    
+    toggle.addEventListener('click', () => {
+        isOn = !isOn;
+        toggle.style.backgroundColor = isOn ? '#4CAF50' : '#cccccc';
+        slider.style.transform = isOn ? 'translateX(20px)' : 'translateX(0)';
+        
+        if (onToggle) {
+            onToggle(isOn);
+        }
+    });
+    
+    // Initialize toggle state
+    toggle.style.backgroundColor = isOn ? '#4CAF50' : '#cccccc';
+    slider.style.transform = isOn ? 'translateX(20px)' : 'translateX(0)';
+    
+    return container;
 } 
