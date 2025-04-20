@@ -1,9 +1,8 @@
 // HDR environment options
 export const hdrOptions = [
-    { name: 'Studio', path: '/src/assets/brown_photostudio_01_4k.hdr' },
-    { name: 'Sunset', path: '/src/assets/belfast.hdr' },
-    { name: 'Night', path: '/src/assets/lilienstein_4k.hdr' },
-    { name: 'Beach', path: '/src/assets/beach_1k.hdr' }
+    { name: 'Studio', path: '/brown_photostudio_01_4k.hdr' },
+    { name: 'Sunset', path: '/belfast.hdr' },
+    { name: 'Night', path: '/lilienstein_4k.hdr' },
 ];
 
 // function to create and return the HDR selector element

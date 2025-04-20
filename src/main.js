@@ -144,7 +144,7 @@ document.body.appendChild(hdrSelector);
 
 // Load the GLTF model
 loader.load(
-    '/src/assets/sunglasses-spectar.gltf',
+    '/sunglasses-spectar.gltf',
     function(gltf) {
         model = gltf.scene;
         
