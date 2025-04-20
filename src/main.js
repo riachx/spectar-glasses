@@ -108,16 +108,13 @@ let modelLoaded = false;
 let hdrLoaded = false;
 let modelProgress = 0;
 let hdrProgress = 0;
-let backgroundEnabled = false; // Track if background is enabled, disabled by default
+let backgroundEnabled = false; 
 
-// Function to update overall loading progress
 function updateLoadingProgress() {
-    // Calculate overall progress (model and HDR each contribute 50%)
     const overallProgress = (modelProgress + hdrProgress) / 2;
     loadingBar.updateProgress(overallProgress);
 }
 
-// Function to check if everything is loaded
 function checkLoadingComplete() {
     if (modelLoaded && hdrLoaded && !loadingComplete) {
         loadingComplete = true;

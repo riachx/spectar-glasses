@@ -9,12 +9,31 @@ export function createHeader() {
     header.style.color = '#000000';
     header.style.zIndex = '1000';
     
+    // Create logo image
+    const logo = document.createElement('img');
+    logo.src = '/logo.png';
+    logo.style.height = '50px';
+    logo.style.width = 'auto';
+    logo.style.marginRight = '10px';
+    logo.style.opacity = '0';
+    logo.style.transform = 'translate(-50px, -20px)';
+    logo.style.transition = 'opacity 0.5s ease-out, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+    logo.style.willChange = 'transform, opacity';
+    header.appendChild(logo);
+    
     // Create a span for each letter to animate individually
     const text = 'SpectAR';
     const letters = text.split('');
     
     // Use requestAnimationFrame for smoother animations
     requestAnimationFrame(() => {
+        // Animate logo first
+        setTimeout(() => {
+            logo.style.opacity = '1';
+            logo.style.transform = 'translate(0, 0)';
+        }, 300);
+        
+        // Then animate letters
         letters.forEach((letter, index) => {
             const span = document.createElement('span');
             span.textContent = letter;
@@ -32,7 +51,7 @@ export function createHeader() {
                 span.style.opacity = '1';
                 span.style.transform = 'translate(0, 0)'; // Move to final position
                 span.style.letterSpacing = '-2px'; // End with the desired letter spacing
-            }, 300 + (index * 100)); // Stagger the animation for each letter
+            }, 300 + (index * 100)); // Stagger the animation for each letter, starting after logo animation
         });
     });
     
