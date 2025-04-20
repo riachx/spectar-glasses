@@ -1,0 +1,24 @@
+{
+  "name": "spectar-glasses",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/riachx/spectar-glasses.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/riachx/spectar-glasses/issues"
+  },
+  "homepage": "https://github.com/riachx/spectar-glasses#readme",
+  "dependencies": {
+    "postprocessing": "^6.37.2",
+    "three": "^0.175.0"
+  }
+}
