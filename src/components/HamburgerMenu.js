@@ -157,7 +157,7 @@ export function createHamburgerMenu(backgroundToggleCallback, hdrSelectorCallbac
         return link;
     };
     
-    const figmaLink = createStyledLink('Figma Design', 'https://www.figma.com/file/example');
+    const figmaLink = createStyledLink('Figma Design', 'https://www.figma.com/design/BfLc5XcPfYhvDrLIaeRTMo/uci-designathon?node-id=49-5197&t=PmxgXlgftKg4XGUX-1');
     resourcesSection.appendChild(figmaLink);
     
     const sunglassModel = createStyledLink('Sunglass 3D Model Process', 'https://youtu.be/-NCdYy38jkY');
