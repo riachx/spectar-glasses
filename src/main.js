@@ -113,10 +113,7 @@ let backgroundEnabled = false; // Track if background is enabled, disabled by de
 // Function to update overall loading progress
 function updateLoadingProgress() {
     // Calculate overall progress (model and HDR each contribute 50%)
-    // Ensure we don't divide by zero or get NaN/Infinity values
-    const modelProgressSafe = isNaN(modelProgress) || !isFinite(modelProgress) ? 0 : modelProgress;
-    const hdrProgressSafe = isNaN(hdrProgress) || !isFinite(hdrProgress) ? 0 : hdrProgress;
-    const overallProgress = (modelProgressSafe + hdrProgressSafe) / 2;
+    const overallProgress = (modelProgress + hdrProgress) / 2;
     loadingBar.updateProgress(overallProgress);
 }
 
@@ -196,8 +193,7 @@ function loadHDRMap(index) {
             },
             
             function(xhr) {
-                // Prevent division by zero
-                hdrProgress = xhr.total > 0 ? (xhr.loaded / xhr.total) * 100 : 0;
+                hdrProgress = (xhr.loaded / xhr.total) * 100;
                 updateLoadingProgress();
             },
             // Error callback
@@ -293,9 +289,7 @@ loader.load(
         checkLoadingComplete();
     },
     function(xhr) {
-        // Update model loading progress
-        // Prevent division by zero
-        modelProgress = xhr.total > 0 ? (xhr.loaded / xhr.total) * 100 : 0;
+        modelProgress = (xhr.loaded / xhr.total) * 100;
         updateLoadingProgress();
     },
     function(error) {
